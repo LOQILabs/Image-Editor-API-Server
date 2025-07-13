@@ -54,10 +54,10 @@ app.post('/process', upload.single('image'), async (req, res) => {
     ctx.lineWidth = fontSize * 0.08;
 
     const textShadow = {
-      color: 'rgba(0, 0, 0, 0.6)',
-      offsetX: 2,
-      offsetY: 2,
-      blur: 4
+      color: 'rgba(0.0, 0.0, 0.0, 1.0)',
+      offsetX: height * 0.1,
+      offsetY: height * 0.1,
+      blur: height * 0.03
     };
 
     ctx.shadowColor = textShadow.color;
