@@ -53,6 +53,18 @@ app.post('/process', upload.single('image'), async (req, res) => {
     ctx.strokeStyle = '#000000';
     ctx.lineWidth = fontSize * 0.08;
 
+    const textShadow = {
+      color: 'rgba(0, 0, 0, 0.6)',
+      offsetX: 2,
+      offsetY: 2,
+      blur: 4
+    };
+
+    ctx.shadowColor = textShadow.color;
+    ctx.shadowOffsetX = textShadow.offsetX;
+    ctx.shadowOffsetY = textShadow.offsetY;
+    ctx.shadowBlur = textShadow.blur;
+
     const maxTextWidth = width * 0.5;
     const words = caption.split(' ');
     let line = '';
@@ -74,6 +86,11 @@ app.post('/process', upload.single('image'), async (req, res) => {
       ctx.strokeText(line.trim(), width - paddingX, y);
       ctx.fillText(line.trim(), width - paddingX, y);
     }
+
+    ctx.shadowColor = 'transparent';
+    ctx.shadowOffsetX = 0;
+    ctx.shadowOffsetY = 0;
+    ctx.shadowBlur = 0;
 
     // Load logo and loqi
     const logoImage = await loadImage(logoResized);
