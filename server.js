@@ -31,7 +31,7 @@ app.post('/process', upload.single('image'), async (req, res) => {
     const paddingY = height * 0.2; // 20% from top
     const paddingX = width * 0.2;  // 20% from right (used with textAlign = 'right')
 
-    const fontSize = Math.floor(height * 0.05); // 5% of height
+    const fontSize = Math.floor(height * 0.2); // 5% of height
     ctx.font = `bold ${fontSize}px Helvetica`;  // Make text bold
     ctx.fillStyle = '#ffffff';
     ctx.textAlign = 'right';
