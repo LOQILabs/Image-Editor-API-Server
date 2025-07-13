@@ -25,15 +25,17 @@ app.post('/process', upload.single('image'), async (req, res) => {
     // Draw text on canvas
     const canvas = createCanvas(width, height);
     const ctx = canvas.getContext('2d');
-    const baseImage = await loadImage(baseImageBuffer);
+
+    const blurredImageBuffer = await sharp(baseImageBuffer).blur(5).toBuffer(); // blur the image
+    const baseImage = await loadImage(blurredImageBuffer);
     ctx.drawImage(baseImage, 0, 0, width, height);
 
-    const paddingY = height * 0.2; // 20% from top
-    const paddingX = height * 0.2;  // 20% from right (used with textAlign = 'right')
+    const paddingY = height * 0.13; // 20% from top
+    const paddingX = height * 0.13;  // 20% from right (used with textAlign = 'right')
 
     const fontSize = Math.floor(height * 0.13); // 5% of height
     ctx.font = `bold ${fontSize}px Helvetica`;  // Make text bold
-    ctx.fillStyle = '#ffffff';
+    ctx.fillStyle = '#fff59aff';
     ctx.textAlign = 'right';
     ctx.textBaseline = 'top';
 
