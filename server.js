@@ -17,7 +17,7 @@ app.post('/process', upload.single('image'), async (req, res) => {
     const logoBuffer = Buffer.from(logoResponse.data);
 
     const { width, height } = await sharp(baseImageBuffer).metadata();
-    const logoSize = Math.floor(height * 0.08);
+    const logoSize = Math.floor(height * 0.1);
     const padding = Math.floor(height * 0.03);
 
     const logoResized = await sharp(logoBuffer).resize({ height: logoSize }).toBuffer();
@@ -28,7 +28,7 @@ app.post('/process', upload.single('image'), async (req, res) => {
     const baseImage = await loadImage(baseImageBuffer);
     ctx.drawImage(baseImage, 0, 0, width, height);
 
-    ctx.font = `${Math.floor(height * 0.05)}px Helvetica`;
+    ctx.font = `${Math.floor(height * 0.1)}px Helvetica`;
     ctx.fillStyle = '#ffffff';
     ctx.textAlign = 'right';
     ctx.textBaseline = 'top';
@@ -53,7 +53,7 @@ app.post('/process', upload.single('image'), async (req, res) => {
 
     // Add logo
     const logoImage = await loadImage(logoResized);
-    ctx.drawImage(logoImage, width - logoSize - padding, height - logoSize - padding, logoSize, logoSize);
+    ctx.drawImage(logoImage, padding, padding, logoSize, logoSize);
 
     res.set('Content-Type', 'image/png');
     canvas.createPNGStream().pipe(res);
