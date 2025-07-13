@@ -2,7 +2,7 @@ const express = require('express');
 const sharp = require('sharp');
 const axios = require('axios');
 const multer = require('multer');
-const { createCanvas, registerFont, loadImage } = require('canvas');
+const { createCanvas, loadImage } = require('canvas');
 const upload = multer();
 
 const app = express();
@@ -11,36 +11,47 @@ app.post('/process', upload.single('image'), async (req, res) => {
   try {
     const logoUrl = req.query.logo;
     const caption = req.body.caption;
+    const loqiUrl = req.body.loqi;
     const baseImageBuffer = req.file.buffer;
 
-    const logoResponse = await axios.get(logoUrl, { responseType: 'arraybuffer' });
+    const [logoResponse, loqiResponse] = await Promise.all([
+      axios.get(logoUrl, { responseType: 'arraybuffer' }),
+      axios.get(loqiUrl, { responseType: 'arraybuffer' })
+    ]);
+
     const logoBuffer = Buffer.from(logoResponse.data);
+    const loqiBuffer = Buffer.from(loqiResponse.data);
 
     const { width, height } = await sharp(baseImageBuffer).metadata();
     const logoSize = Math.floor(height * 0.1);
     const padding = Math.floor(height * 0.03);
+    const spacing = Math.floor(width * 0.01); // 1% horizontal gap
 
     const logoResized = await sharp(logoBuffer).resize({ height: logoSize }).toBuffer();
 
-    // Draw text on canvas
+    // Resize loqi while maintaining aspect ratio
+    const loqiMetadata = await sharp(loqiBuffer).metadata();
+    const loqiWidth = Math.floor((loqiMetadata.width / loqiMetadata.height) * logoSize);
+    const loqiResized = await sharp(loqiBuffer).resize({ height: logoSize }).toBuffer();
+
+    // Draw image
     const canvas = createCanvas(width, height);
     const ctx = canvas.getContext('2d');
 
-    const blurredImageBuffer = await sharp(baseImageBuffer).blur(5).toBuffer(); // blur the image
+    const blurredImageBuffer = await sharp(baseImageBuffer).blur(5).toBuffer();
     const baseImage = await loadImage(blurredImageBuffer);
     ctx.drawImage(baseImage, 0, 0, width, height);
 
-    const paddingY = height * 0.13; // 20% from top
-    const paddingX = height * 0.13;  // 20% from right (used with textAlign = 'right')
-
-    const fontSize = Math.floor(height * 0.12); // 5% of height
-    ctx.font = `bold ${fontSize}px Helvetica`;  // Make text bold
+    // Text
+    const paddingY = height * 0.13;
+    const paddingX = height * 0.13;
+    const fontSize = Math.floor(height * 0.12);
+    ctx.font = `bold ${fontSize}px Helvetica`;
     ctx.fillStyle = '#ffe5c8ff';
     ctx.textAlign = 'right';
     ctx.textBaseline = 'top';
-    
-    ctx.strokeStyle = '#000000';          // Black outline
-    ctx.lineWidth = fontSize * 0.08; 
+    ctx.strokeStyle = '#000000';
+    ctx.lineWidth = fontSize * 0.08;
 
     const maxTextWidth = width * 0.5;
     const words = caption.split(' ');
@@ -51,25 +62,31 @@ app.post('/process', upload.single('image'), async (req, res) => {
       const testLine = line + words[i] + ' ';
       const testWidth = ctx.measureText(testLine).width;
       if (testWidth > maxTextWidth && i > 0) {
-        ctx.strokeText(line.trim(), width - paddingX, y);  // Outline
-        ctx.fillText(line.trim(), width - paddingX, y);    // Fill
+        ctx.strokeText(line.trim(), width - paddingX, y);
+        ctx.fillText(line.trim(), width - paddingX, y);
         line = words[i] + ' ';
-        y += fontSize * 1.1; // line height
+        y += fontSize * 1.1;
       } else {
         line = testLine;
       }
     }
-
-    // Draw the final line
     if (line) {
       ctx.strokeText(line.trim(), width - paddingX, y);
       ctx.fillText(line.trim(), width - paddingX, y);
     }
 
-    // Add logo
+    // Load logo and loqi
     const logoImage = await loadImage(logoResized);
+    const loqiImage = await loadImage(loqiResized);
+
+    // Draw logo
     ctx.drawImage(logoImage, padding, height - logoSize - padding, logoSize, logoSize);
 
+    // Draw loqi right next to logo
+    const loqiX = padding + logoSize + spacing;
+    ctx.drawImage(loqiImage, loqiX, height - logoSize - padding, loqiWidth, logoSize);
+
+    // Send final image
     res.set('Content-Type', 'image/png');
     canvas.createPNGStream().pipe(res);
 
