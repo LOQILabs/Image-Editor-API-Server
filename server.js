@@ -35,7 +35,7 @@ app.post('/process', upload.single('image'), async (req, res) => {
 
 
 
-    const fontSize = Math.floor(height * 0.1); // 5% of height
+    const fontSize = Math.floor(height * 0.4); // 5% of height
     ctx.font = 'bold ${fontSize}px Helvetica';  // Make text bold
     ctx.fillStyle = '#fcffe2ff';          // White fill
     ctx.strokeStyle = '#000000';          // Black outline
