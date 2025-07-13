@@ -35,7 +35,7 @@ app.post('/process', upload.single('image'), async (req, res) => {
 
     const fontSize = Math.floor(height * 0.09); // 5% of height
     ctx.font = `bold ${fontSize}px Helvetica`;  // Make text bold
-    ctx.fillStyle = '#fff59aff';
+    ctx.fillStyle = '#d2003cff';
     ctx.textAlign = 'right';
     ctx.textBaseline = 'top';
     
