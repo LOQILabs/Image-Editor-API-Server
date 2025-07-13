@@ -28,7 +28,11 @@ app.post('/process', upload.single('image'), async (req, res) => {
     const baseImage = await loadImage(baseImageBuffer);
     ctx.drawImage(baseImage, 0, 0, width, height);
 
-    ctx.font = `${Math.floor(height * 0.1)}px Helvetica`;
+    const paddingY = height * 0.2; // 20% from top
+    const paddingX = width * 0.2;  // 20% from right (used with textAlign = 'right')
+
+    const fontSize = Math.floor(height * 0.05); // 5% of height
+    ctx.font = `bold ${fontSize}px Helvetica`;  // Make text bold
     ctx.fillStyle = '#ffffff';
     ctx.textAlign = 'right';
     ctx.textBaseline = 'top';
@@ -36,24 +40,28 @@ app.post('/process', upload.single('image'), async (req, res) => {
     const maxTextWidth = width * 0.5;
     const words = caption.split(' ');
     let line = '';
-    let y = padding;
+    let y = paddingY;
 
     for (let i = 0; i < words.length; i++) {
       const testLine = line + words[i] + ' ';
       const testWidth = ctx.measureText(testLine).width;
       if (testWidth > maxTextWidth && i > 0) {
-        ctx.fillText(line.trim(), width - padding, y);
+        ctx.fillText(line.trim(), width - paddingX, y);
         line = words[i] + ' ';
-        y += height * 0.06;
+        y += fontSize * 1.2; // line height
       } else {
         line = testLine;
       }
     }
-    ctx.fillText(line.trim(), width - padding, y);
+
+    // Draw the final line
+    if (line) {
+      ctx.fillText(line.trim(), width - paddingX, y);
+    }
 
     // Add logo
     const logoImage = await loadImage(logoResized);
-    ctx.drawImage(logoImage, padding, padding, logoSize, logoSize);
+    ctx.drawImage(logoImage, padding, height - logoSize - padding, logoSize, logoSize);
 
     res.set('Content-Type', 'image/png');
     canvas.createPNGStream().pipe(res);
