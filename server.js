@@ -29,9 +29,9 @@ app.post('/process', upload.single('image'), async (req, res) => {
     ctx.drawImage(baseImage, 0, 0, width, height);
 
     const paddingY = height * 0.2; // 20% from top
-    const paddingX = width * 0.2;  // 20% from right (used with textAlign = 'right')
+    const paddingX = height * 0.2;  // 20% from right (used with textAlign = 'right')
 
-    const fontSize = Math.floor(height * 0.2); // 5% of height
+    const fontSize = Math.floor(height * 0.13); // 5% of height
     ctx.font = `bold ${fontSize}px Helvetica`;  // Make text bold
     ctx.fillStyle = '#ffffff';
     ctx.textAlign = 'right';
@@ -48,7 +48,7 @@ app.post('/process', upload.single('image'), async (req, res) => {
       if (testWidth > maxTextWidth && i > 0) {
         ctx.fillText(line.trim(), width - paddingX, y);
         line = words[i] + ' ';
-        y += fontSize * 1.2; // line height
+        y += fontSize * 1.1; // line height
       } else {
         line = testLine;
       }
