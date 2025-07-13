@@ -43,86 +43,36 @@ app.post('/process', upload.single('image'), async (req, res) => {
     ctx.drawImage(baseImage, 0, 0, width, height);
 
     // Text
-    const highlightColor = '#ff002fff'; // Your accent fill color
-    const highlightStrokeColor = '#830000ff'; // Accent outline
+    const paddingY = height * 0.13;
+    const paddingX = height * 0.13;
+    const fontSize = Math.floor(height * 0.12);
+    ctx.font = `bold ${fontSize}px Helvetica`;
+    ctx.fillStyle = '#ffe5c8ff';
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'top';
+    ctx.strokeStyle = '#000000';
+    ctx.lineWidth = fontSize * 0.08;
 
     const maxTextWidth = width * 0.5;
     const words = caption.split(' ');
     let line = '';
     let y = paddingY;
 
-    function isHighlightWord(wordGroup) {
-      // List of keywords in English and Arabic
-      const accentWords = [
-        'ai agent',
-        'agent ai',
-        'loqi labs',
-        'وكيل الذكاء الاصطناعي',      // AI Agent
-        'الذكاء الاصطناعي',            // Artificial Intelligence
-        'وكيل ai',                    // AI Agent (alternate)
-        'لوجي لابز',                  // LOQI Labs (transliteration)
-        'وكيل لوجي',                  // LOQI Agent
-        'وكيل لوكي',                  // LOQI Agent (alternate spelling)
-        'لوكي لابز',                  // LOQI Labs (alternate transliteration)
-      ];
-
-      return accentWords.includes(normalized);
+    for (let i = 0; i < words.length; i++) {
+      const testLine = line + words[i] + ' ';
+      const testWidth = ctx.measureText(testLine).width;
+      if (testWidth > maxTextWidth && i > 0) {
+        ctx.strokeText(line.trim(), width - paddingX, y);
+        ctx.fillText(line.trim(), width - paddingX, y);
+        line = words[i] + ' ';
+        y += fontSize * 1.1;
+      } else {
+        line = testLine;
+      }
     }
-
-    let i = 0;
-    while (i < words.length) {
-      let lineWords = [];
-      let lineWidth = 0;
-
-      while (i < words.length) {
-        const word = words[i];
-        const testLine = [...lineWords, word].join(' ') + ' ';
-        const testWidth = ctx.measureText(testLine).width;
-
-        if (testWidth > maxTextWidth && lineWords.length > 0) break;
-
-        lineWords.push(word);
-        lineWidth = testWidth;
-        i++;
-      }
-
-      // Draw each word with conditional highlighting
-      let xCursor = width - paddingX - lineWidth;
-      for (let j = 0; j < lineWords.length; j++) {
-        const current = lineWords[j];
-        const next = lineWords[j + 1] || '';
-        const twoWordCombo = `${current} ${next}`.toLowerCase();
-
-        let drawWord = current;
-        let measure = ctx.measureText(drawWord + ' ').width;
-
-        // Check for 2-word highlight (like "AI Agent" or "LOQI Labs")
-        if (j < lineWords.length - 1 && isHighlightWord(twoWordCombo)) {
-          ctx.strokeStyle = highlightStrokeColor;
-          ctx.fillStyle = highlightColor;
-          ctx.strokeText(twoWordCombo, xCursor, y);
-          ctx.fillText(twoWordCombo, xCursor, y);
-          const comboWidth = ctx.measureText(twoWordCombo + ' ').width;
-          xCursor += comboWidth;
-          j++; // skip next word
-          continue;
-        }
-
-        // Check for single-word highlight
-        if (isHighlightWord(drawWord)) {
-          ctx.strokeStyle = highlightStrokeColor;
-          ctx.fillStyle = highlightColor;
-        } else {
-          ctx.strokeStyle = '#000000';
-          ctx.fillStyle = '#ffe5c8ff';
-        }
-
-        ctx.strokeText(drawWord, xCursor, y);
-        ctx.fillText(drawWord, xCursor, y);
-        xCursor += measure;
-      }
-
-      y += fontSize * 1.1;
+    if (line) {
+      ctx.strokeText(line.trim(), width - paddingX, y);
+      ctx.fillText(line.trim(), width - paddingX, y);
     }
 
     // Load logo and loqi
