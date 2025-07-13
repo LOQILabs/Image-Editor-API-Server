@@ -33,9 +33,13 @@ app.post('/process', upload.single('image'), async (req, res) => {
     const paddingY = height * 0.13; // 20% from top
     const paddingX = height * 0.13;  // 20% from right (used with textAlign = 'right')
 
-    const fontSize = Math.floor(height * 0.13); // 5% of height
-    ctx.font = `bold ${fontSize}px Helvetica`;  // Make text bold
-    ctx.fillStyle = '#fff59aff';
+
+
+    const fontSize = Math.floor(height * 0.1); // 5% of height
+    ctx.font = 'bold ${fontSize}px Helvetica';  // Make text bold
+    ctx.fillStyle = '#fcffe2ff';          // White fill
+    ctx.strokeStyle = '#000000';          // Black outline
+    ctx.lineWidth = fontSize * 0.08;      // Stroke thickness (~8% of font size)
     ctx.textAlign = 'right';
     ctx.textBaseline = 'top';
 
@@ -48,18 +52,21 @@ app.post('/process', upload.single('image'), async (req, res) => {
       const testLine = line + words[i] + ' ';
       const testWidth = ctx.measureText(testLine).width;
       if (testWidth > maxTextWidth && i > 0) {
-        ctx.fillText(line.trim(), width - paddingX, y);
+        ctx.strokeText(line.trim(), width - paddingX, y);  // Outline
+        ctx.fillText(line.trim(), width - paddingX, y);    // Fill
         line = words[i] + ' ';
-        y += fontSize * 1.1; // line height
+        y += fontSize * 1.05;
       } else {
         line = testLine;
       }
     }
 
-    // Draw the final line
-    if (line) {
-      ctx.fillText(line.trim(), width - paddingX, y);
-    }
+// Final line
+if (line) {
+  ctx.strokeText(line.trim(), width - paddingX, y);
+  ctx.fillText(line.trim(), width - paddingX, y);
+}
+
 
     // Add logo
     const logoImage = await loadImage(logoResized);
