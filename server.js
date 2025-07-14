@@ -12,7 +12,7 @@ app.post('/process', upload.single('image'), async (req, res) => {
     const logoUrl = req.query.logo;
     const caption = req.body.caption;
     const loqiUrl = req.body.loqi;
-    const fontSizeFactor = parseFloat(req.body.fontSizeFactor);
+    const fontSizeFactor = parseFloat(req.body.fontSizeFactor) || 1.0;
     const baseImageBuffer = req.file.buffer;
 
     const [logoResponse, loqiResponse] = await Promise.all([
