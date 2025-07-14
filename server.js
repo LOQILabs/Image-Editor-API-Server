@@ -7,6 +7,11 @@ const upload = multer();
 
 const app = express();
 
+const path = require('path');
+const { registerFont } = require('canvas');
+
+registerFont(path.join(__dirname, 'fonts', 'Satoshi-Black.otf'), { family: 'Satoshi' });
+
 app.post('/process', upload.single('image'), async (req, res) => {
   try {
     const logoUrl = req.query.logo;
@@ -47,24 +52,18 @@ app.post('/process', upload.single('image'), async (req, res) => {
     const paddingY = height * 0.13;
     const paddingX = height * 0.13;
     const fontSize = Math.floor(height * fontSizeFactor );
-    ctx.font = `bold ${fontSize}px Helvetica`;
+    ctx.font = `${fontSize}px Satoshi`;
     ctx.fillStyle = '#ffe5c8ff';
     ctx.textAlign = 'right';
     ctx.textBaseline = 'top';
     ctx.strokeStyle = '#000000';
     ctx.lineWidth = fontSize * 0.08;
 
-    const textShadow = {
-      color: 'rgba(0.0, 0.0, 0.0, 1.0)',
-      offsetX: height * 0.1,
-      offsetY: height * 0.1,
-      blur: height * 0.03
-    };
 
-    ctx.shadowColor = textShadow.color;
-    ctx.shadowOffsetX = textShadow.offsetX;
-    ctx.shadowOffsetY = textShadow.offsetY;
-    ctx.shadowBlur = textShadow.blur;
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
+    ctx.shadowOffsetX = fontSize * 0.05;
+    ctx.shadowOffsetY = fontSize * 0.05;
+    ctx.shadowBlur = fontSize * 0.15;
 
     const maxTextWidth = width * 0.5;
     const words = caption.split(' ');
