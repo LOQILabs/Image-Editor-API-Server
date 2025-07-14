@@ -60,10 +60,10 @@ app.post('/process', upload.single('image'), async (req, res) => {
     ctx.lineWidth = fontSize * 0.08;
 
 
-    ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
-    ctx.shadowOffsetX = fontSize * 0.05;
-    ctx.shadowOffsetY = fontSize * 0.05;
-    ctx.shadowBlur = fontSize * 0.15;
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
+    ctx.shadowOffsetX = 0;
+    ctx.shadowOffsetY = 0;
+    ctx.shadowBlur = fontSize * 0.25;
 
     const maxTextWidth = width * 0.5;
     const words = caption.split(' ');
@@ -83,7 +83,7 @@ app.post('/process', upload.single('image'), async (req, res) => {
       }
     }
     if (line) {
-      ctx.strokeText(line.trim(), width - paddingX, y);
+  //    ctx.strokeText(line.trim(), width - paddingX, y);
       ctx.fillText(line.trim(), width - paddingX, y);
     }
 
