@@ -12,6 +12,7 @@ app.post('/process', upload.single('image'), async (req, res) => {
     const logoUrl = req.query.logo;
     const caption = req.body.caption;
     const loqiUrl = req.body.loqi;
+    const language = req.body.lang;
     const baseImageBuffer = req.file.buffer;
 
     const [logoResponse, loqiResponse] = await Promise.all([
@@ -45,7 +46,7 @@ app.post('/process', upload.single('image'), async (req, res) => {
     // Text
     const paddingY = height * 0.13;
     const paddingX = height * 0.13;
-    const fontSize = Math.floor(height * 0.12);
+    const fontSize = Math.floor(height * (language == "en" ? 0.12 : 0.8) );
     ctx.font = `bold ${fontSize}px Helvetica`;
     ctx.fillStyle = '#ffe5c8ff';
     ctx.textAlign = 'right';
