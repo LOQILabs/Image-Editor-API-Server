@@ -61,9 +61,9 @@ app.post('/process', upload.single('image'), async (req, res) => {
 
 
     ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
-    ctx.shadowOffsetX = 0;
-    ctx.shadowOffsetY = 0;
-    ctx.shadowBlur = fontSize * 0.25;
+    ctx.shadowOffsetX = fontSize * 0.08;
+    ctx.shadowOffsetY = ctx.shadowOffsetX;
+    ctx.shadowBlur = fontSize * 0.15;
 
     const maxTextWidth = width * 0.5;
     const words = caption.split(' ');
@@ -74,7 +74,7 @@ app.post('/process', upload.single('image'), async (req, res) => {
       const testLine = line + words[i] + ' ';
       const testWidth = ctx.measureText(testLine).width;
       if (testWidth > maxTextWidth && i > 0) {
-        ctx.strokeText(line.trim(), width - paddingX, y);
+      //  ctx.strokeText(line.trim(), width - paddingX, y);
         ctx.fillText(line.trim(), width - paddingX, y);
         line = words[i] + ' ';
         y += fontSize * 1.1;
