@@ -13,6 +13,11 @@ const { registerFont } = require('canvas');
 registerFont(path.join(__dirname, 'fonts', 'Satoshi-Black.otf'), { family: 'Satoshi' });
 
 app.post('/process', upload.single('image'), async (req, res) => {
+
+  if (!req.file) {
+    return res.status(400).send('No image uploaded.');
+  }
+
   try {
     const logoUrl = req.query.logo;
     const caption = req.body.caption;
@@ -105,10 +110,14 @@ app.post('/process', upload.single('image'), async (req, res) => {
 
     // Send final image
     res.set('Content-Type', 'image/png');
+
+    res.status(200).set('Content-Type', 'image/png');
+    console.log('✅ Image successfully generated and streaming.');
+
     canvas.createPNGStream().pipe(res);
 
   } catch (err) {
-    console.error(err);
+    console.error('❌ Image processing failed:', err);
     res.status(500).send('Failed to process image.');
   }
 });
