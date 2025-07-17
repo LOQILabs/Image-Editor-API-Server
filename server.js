@@ -109,9 +109,10 @@ app.post('/process', upload.single('image'), async (req, res) => {
     ctx.drawImage(loqiImage, loqiX, height - logoSize - padding, loqiWidth, logoSize);
 
     // Send final image
-    res.set('Content-Type', 'image/png');
-
-    res.status(200).set('Content-Type', 'image/png');
+    const buffer = canvas.toBuffer('image/png');
+    res.setHeader('Content-Type', 'image/png');
+    res.setHeader('Content-Disposition', 'attachment; filename="data.png"');
+    res.status(200).send(buffer);
     console.log('✅ Image successfully generated and streaming.');
 
     canvas.createPNGStream().pipe(res);
