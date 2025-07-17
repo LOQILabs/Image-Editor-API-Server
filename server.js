@@ -11,6 +11,20 @@ const path = require('path');
 const { registerFont } = require('canvas');
 
 registerFont(path.join(__dirname, 'fonts', 'Satoshi-Black.otf'), { family: 'Satoshi' });
+//---------------------------------------------------------------------------------------------------
+
+
+//------------------------------------------------(GET - for status check)------------------------------------------------------
+
+app.get('/status', (req, res) => {
+  console.log(' => Status Request Made.....');
+  res.status(200).json({ status: 'ready', timestamp: new Date().toISOString() });
+  console.log(' <= Status Update Send!');
+});
+
+
+//------------------------------------------------(POST - image and get edited image)------------------------------------------------------
+
 
 app.post('/process', upload.single('image'), async (req, res) => {
 
