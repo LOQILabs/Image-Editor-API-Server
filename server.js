@@ -7,7 +7,7 @@ const { createCanvas, loadImage, registerFont } = require('canvas');
 const upload = multer();
 const fs = require('fs');
 const path = require('path');
-const { v4: uuid } = require('uuid');
+const { randomUUID } = require('crypto');
 
 // ====== (1) CONFIG: public dir + base URL for links ======
 const PUBLIC_DIR = path.join(__dirname, 'public', 'images'); // where files are saved
@@ -149,7 +149,7 @@ app.post('/process', upload.single('image'), async (req, res) => {
     // Ensure directory exists
     fs.mkdirSync(PUBLIC_DIR, { recursive: true });
 
-    const id = uuid();
+    const id = randomUUID();
     const filename = `${id}.png`;
     const outPath = path.join(PUBLIC_DIR, filename);
 
