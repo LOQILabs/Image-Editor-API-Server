@@ -1,40 +1,45 @@
+// server.js
 const express = require('express');
 const sharp = require('sharp');
 const axios = require('axios');
 const multer = require('multer');
-const { createCanvas, loadImage } = require('canvas');
+const { createCanvas, loadImage, registerFont } = require('canvas');
 const upload = multer();
+const fs = require('fs');
+const path = require('path');
+const { v4: uuid } = require('uuid');
+
+// ====== (1) CONFIG: public dir + base URL for links ======
+const PUBLIC_DIR = path.join(__dirname, 'public', 'images'); // where files are saved
+const BASE_URL = process.env.PUBLIC_BASE_URL || 'https://image-editor-api-server.onrender.com'; // <-- set this env var in prod
+
+// fonts
+registerFont(path.join(__dirname, 'fonts', 'Satoshi-Black.otf'), { family: 'Satoshi' });
 
 const app = express();
 
-const path = require('path');
-const { registerFont } = require('canvas');
-
-registerFont(path.join(__dirname, 'fonts', 'Satoshi-Black.otf'), { family: 'Satoshi' });
-//---------------------------------------------------------------------------------------------------
-
+// ====== (2) STATIC HOSTING: serve saved images at /images/... ======
+app.use('/images', express.static(PUBLIC_DIR, {
+  maxAge: '7d',
+  setHeaders: (res) => {
+    res.setHeader('Cache-Control', 'public, max-age=604800, immutable');
+  }
+}));
 
 //------------------------------------------------(GET - for status check)------------------------------------------------------
-
 app.get('/status', (req, res) => {
   console.log(' => Status Request Made.....');
   res.status(200).json({ status: 'ready', timestamp: new Date().toISOString() });
   console.log(' <= Status Update Send!');
 });
 
-
-//------------------------------------------------(POST - image and get edited image)------------------------------------------------------
-
-
+//------------------------------------------------(POST - image and get a PUBLIC URL back)--------------------------------------
 app.post('/process', upload.single('image'), async (req, res) => {
-
-  if (!req.file) {
-    return res.status(400).send('No image uploaded.');
-  }
+  if (!req.file) return res.status(400).json({ error: 'No image uploaded.' });
 
   try {
     const logoUrl = req.query.logo;
-    const caption = req.body.caption;
+    const caption = req.body.caption || '';
     const loqiUrl = req.body.loqi;
     const fontSizeFactor = parseFloat(req.body.fontSizeFactor) || 1.0;
     const baseImageBuffer = req.file.buffer;
@@ -47,7 +52,10 @@ app.post('/process', upload.single('image'), async (req, res) => {
     const logoBuffer = Buffer.from(logoResponse.data);
     const loqiBuffer = Buffer.from(loqiResponse.data);
 
-    const { width, height } = await sharp(baseImageBuffer).metadata();
+    const meta = await sharp(baseImageBuffer).metadata();
+    const width = meta.width;
+    const height = meta.height;
+
     const logoSize = Math.floor(height * 0.1);
     const padding = Math.floor(height * 0.03);
     const spacing = Math.floor(width * 0.01); // 1% horizontal gap
@@ -68,9 +76,9 @@ app.post('/process', upload.single('image'), async (req, res) => {
     ctx.drawImage(baseImage, 0, 0, width, height);
 
     // Text
-    const paddingY = height * 0.13;
-    const paddingX = height * 0.13;
-    const fontSize = Math.floor(height * fontSizeFactor );
+    const paddingY = Math.floor(height * 0.13);
+    const paddingX = Math.floor(height * 0.13);
+    let fontSize = Math.floor(height * fontSizeFactor);
     ctx.font = `${fontSize}px Satoshi`;
     ctx.fillStyle = '#fffaf5ff';
     ctx.textAlign = 'right';
@@ -78,32 +86,49 @@ app.post('/process', upload.single('image'), async (req, res) => {
     ctx.strokeStyle = '#000000';
     ctx.lineWidth = fontSize * 0.08;
 
-
     ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
     ctx.shadowOffsetX = fontSize * 0.08;
     ctx.shadowOffsetY = ctx.shadowOffsetX;
     ctx.shadowBlur = fontSize * 0.15;
 
-    const maxTextWidth = width * 0.5;
+    // wrap text without overflowing bottom: shrink font if needed
+    const maxTextWidth = Math.floor(width * 0.5);
     const words = caption.split(' ');
+    let lines = [];
     let line = '';
-    let y = paddingY;
 
-    for (let i = 0; i < words.length; i++) {
-      const testLine = line + words[i] + ' ';
-      const testWidth = ctx.measureText(testLine).width;
-      if (testWidth > maxTextWidth && i > 0) {
-      //  ctx.strokeText(line.trim(), width - paddingX, y);
-        ctx.fillText(line.trim(), width - paddingX, y);
-        line = words[i] + ' ';
-        y += fontSize * 1.1;
-      } else {
-        line = testLine;
+    const measure = (f) => {
+      ctx.font = `${f}px Satoshi`;
+      let tempLines = [];
+      let tempLine = '';
+      for (let i = 0; i < words.length; i++) {
+        const testLine = tempLine + words[i] + ' ';
+        const testWidth = ctx.measureText(testLine).width;
+        if (testWidth > maxTextWidth && i > 0) {
+          tempLines.push(tempLine.trim());
+          tempLine = words[i] + ' ';
+        } else {
+          tempLine = testLine;
+        }
       }
+      if (tempLine) tempLines.push(tempLine.trim());
+      return tempLines;
+    };
+
+    // shrink-to-fit vertically if needed
+    lines = measure(fontSize);
+    const lineHeight = Math.floor(fontSize * 1.1);
+    while ((paddingY + lines.length * lineHeight) > (height - logoSize - padding * 2) && fontSize > 12) {
+      fontSize = Math.floor(fontSize * 0.95);
+      lines = measure(fontSize);
     }
-    if (line) {
-  //    ctx.strokeText(line.trim(), width - paddingX, y);
-      ctx.fillText(line.trim(), width - paddingX, y);
+    ctx.font = `${fontSize}px Satoshi`;
+
+    // draw lines
+    let y = paddingY;
+    for (const ln of lines) {
+      ctx.fillText(ln, width - paddingX, y);
+      y += lineHeight;
     }
 
     ctx.shadowColor = 'transparent';
@@ -115,25 +140,60 @@ app.post('/process', upload.single('image'), async (req, res) => {
     const logoImage = await loadImage(logoResized);
     const loqiImage = await loadImage(loqiResized);
 
-    // Draw logo
+    // Draw logos
     ctx.drawImage(logoImage, padding, height - logoSize - padding, logoSize, logoSize);
-
-    // Draw loqi right next to logo
     const loqiX = padding + logoSize + spacing;
     ctx.drawImage(loqiImage, loqiX, height - logoSize - padding, loqiWidth, logoSize);
 
-    // Send final image
-    const buffer = canvas.toBuffer('image/png');
-    res.setHeader('Content-Type', 'image/png');
-    res.setHeader('Content-Disposition', 'attachment; filename="data.png"');
-    res.status(200).send(buffer);
-    console.log('✅ Image successfully generated and streaming.');
+    // ====== (3) SAVE TO DISK and RETURN JSON URL ======
+    // Ensure directory exists
+    fs.mkdirSync(PUBLIC_DIR, { recursive: true });
 
-    canvas.createPNGStream().pipe(res);
+    const id = uuid();
+    const filename = `${id}.png`;
+    const outPath = path.join(PUBLIC_DIR, filename);
+
+    const outBuffer = canvas.toBuffer('image/png');
+    fs.writeFileSync(outPath, outBuffer);
+
+    // Optionally set a TTL hint (e.g., 24h)
+    const ttlHours = parseInt(req.query.ttlHours || '24', 10);
+    const expiresAt = new Date(Date.now() + ttlHours * 3600 * 1000).toISOString();
+
+    const imageUrl = `${BASE_URL}/images/${filename}`;
+
+    // IMPORTANT: return JSON (do NOT stream the image here)
+    return res.status(200).json({
+      image_url: imageUrl,
+      width,
+      height,
+      id,
+      content_type: 'image/png',
+      expires_at: expiresAt
+    });
 
   } catch (err) {
     console.error('❌ Image processing failed:', err);
-    res.status(500).send('Failed to process image.');
+    return res.status(500).json({ error: 'Failed to process image.' });
+  }
+});
+
+// ====== (4) OPTIONAL: simple cleanup endpoint (delete by id) ======
+app.delete('/images/:id', (req, res) => {
+  const filename = `${req.params.id}.png`;
+  const filePath = path.join(PUBLIC_DIR, filename);
+  if (!fs.existsSync(filePath)) return res.status(404).json({ error: 'Not found' });
+  fs.unlinkSync(filePath);
+  return res.json({ deleted: true });
+});
+
+// ====== (5) OPTIONAL: health endpoint for public directory ======
+app.get('/images/_health', (req, res) => {
+  try {
+    fs.mkdirSync(PUBLIC_DIR, { recursive: true });
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
   }
 });
 
