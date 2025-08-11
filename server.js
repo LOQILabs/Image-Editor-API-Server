@@ -42,6 +42,8 @@ app.post('/process', upload.single('image'), async (req, res) => {
     const caption = req.body.caption || '';
     const loqiUrl = req.body.loqi;
     const fontSizeFactor = parseFloat(req.body.fontSizeFactor) || 1.0;
+    const xOffset = parseFloat(req.body.xOffset) || 0.1;
+    const yOffset = parseFloat(req.body.yOffset) || 0.5;
     const baseImageBuffer = req.file.buffer;
 
     const [logoResponse, loqiResponse] = await Promise.all([
@@ -76,9 +78,9 @@ app.post('/process', upload.single('image'), async (req, res) => {
     ctx.drawImage(baseImage, 0, 0, width, height);
 
     // Text
-    const paddingY = Math.floor(height * 0.13);
-    const paddingX = Math.floor(height * 0.13);
-    let fontSize = Math.floor(height * fontSizeFactor);
+    const paddingY = Math.floor(width * yOffset);
+    const paddingX = Math.floor(width * xOffset);
+    let fontSize = Math.floor(width * fontSizeFactor);
     ctx.font = `${fontSize}px Satoshi`;
     ctx.fillStyle = '#fffaf5ff';
     ctx.textAlign = 'right';
