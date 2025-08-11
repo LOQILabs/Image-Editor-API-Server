@@ -45,6 +45,9 @@ app.post('/process', upload.single('image'), async (req, res) => {
     const xOffset = parseFloat(req.body.xOffset) || 0.1;
     const yOffset = parseFloat(req.body.yOffset) || 0.5;
     const textWidthRatio = parseFloat(req.body.textWidthRatio) || 0.5;
+    const logoSizeRatio = parseFloat(req.body.logoSizeRatio) || 0.1;
+    const logoPaddingRatio = parseFloat(req.body.logoPaddingRatio) || 0.1;
+    const logoSpacingRatio = parseFloat(req.body.logoSpacingRatio) || 0.1;
     const baseImageBuffer = req.file.buffer;
 
     const [logoResponse, loqiResponse] = await Promise.all([
@@ -59,9 +62,9 @@ app.post('/process', upload.single('image'), async (req, res) => {
     const width = meta.width;
     const height = meta.height;
 
-    const logoSize = Math.floor(height * 0.1);
-    const padding = Math.floor(height * 0.03);
-    const spacing = Math.floor(width * 0.01); // 1% horizontal gap
+    const logoSize = Math.floor(width * logoSizeRatio);
+    const padding = Math.floor(width * logoPaddingRatio);
+    const spacing = Math.floor(width * logoSpacingRatio); // 1% horizontal gap
 
     const logoResized = await sharp(logoBuffer).resize({ height: logoSize }).toBuffer();
 
@@ -79,7 +82,7 @@ app.post('/process', upload.single('image'), async (req, res) => {
     ctx.drawImage(baseImage, 0, 0, width, height);
 
     // Text
-    const paddingY = Math.floor(width * yOffset);
+    const paddingY = Math.floor(height * yOffset);
     const paddingX = Math.floor(width * xOffset);
     let fontSize = Math.floor(width * fontSizeFactor);
     ctx.font = `${fontSize}px Satoshi`;
