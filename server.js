@@ -44,6 +44,7 @@ app.post('/process', upload.single('image'), async (req, res) => {
     const fontSizeFactor = parseFloat(req.body.fontSizeFactor) || 1.0;
     const xOffset = parseFloat(req.body.xOffset) || 0.1;
     const yOffset = parseFloat(req.body.yOffset) || 0.5;
+    const textWidthRatio = parseFloat(req.body.textWidthRatio) || 0.5;
     const baseImageBuffer = req.file.buffer;
 
     const [logoResponse, loqiResponse] = await Promise.all([
@@ -94,7 +95,7 @@ app.post('/process', upload.single('image'), async (req, res) => {
     ctx.shadowBlur = fontSize * 0.15;
 
     // wrap text without overflowing bottom: shrink font if needed
-    const maxTextWidth = Math.floor(width * 0.5);
+    const maxTextWidth = Math.floor(width * textWidthRatio);
     const words = caption.split(' ');
     let lines = [];
     let line = '';
